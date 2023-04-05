@@ -1,0 +1,30 @@
+---
+- name: Configure nginx web server
+  hosts: droplet
+  tasks:
+  # https://docs.ansible.com/ansible/2.9/modules/apt_module.html#apt-module
+    - name: install nginx server
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+# https://docs.ansible.com/ansible/2.9/modules/service_module.html#service-module
+    - name: start nginx
+      service:
+        name: nginx
+        state: started
+# analog
+      # systemd:
+      #   name: nginx
+      #   state: started
+      #   enabled: yes
+---
+    # - name: uninstall nginx server
+    #   apt:
+    #     name: nginx
+    #     state: absent
+    #     update_cache: yes
+    # - name: stop nginx
+    #   service:
+    #     name: nginx
+    #     state: stopped
