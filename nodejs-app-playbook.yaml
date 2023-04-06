@@ -1,9 +1,10 @@
 ---
 - name: Install nodejs & npm
   hosts: droplet
+  vars_files:
+    - project-vars
   vars:
     - nodejs_version: 18
-    - pm2_version: 5.2.0
   tasks:
     - name: Update apt repo & update_cache
       apt: update_cache=yes force_apt_get=yes
