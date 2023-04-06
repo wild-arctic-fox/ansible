@@ -1,0 +1,43 @@
+---
+- name: Install nodejs & npm
+  hosts: droplet
+  tasks:
+    - name: Update apt repo & update_cache
+      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+    # The NodeSource nodejs package contains both the node binary and npm
+    - name: Download Node.js setup script
+      command: curl -sL https://deb.nodesource.com/setup_18.x -o /tmp/nodesource_setup.sh
+    - name: Execute Bash script
+      script: /tmp/nodesource_setup.sh
+    - name: Install the nodejs
+      apt:
+        name: nodejs
+        state: present
+    - name: Install pm2 package
+      community.general.npm:
+        name: pm2
+        global: yes
+        version: 5.3.0
+
+- name: Deploy nodejs app
+  hosts: droplet
+  tasks:
+    - name: Copy tar file to server
+      ansible.builtin.copy:
+        src: ~/mynodeapp-cicd-project/app/bootcamp-node-project-1.0.tgz
+        dest: /root/node-project-1.0.tgz
+    - name: Unpack tar file on server
+      ansible.builtin.unarchive:
+        src: /root/node-project-1.0.tgz
+        dest: /root/
+        remote_src: yes
+    - name: Install npm dependencies
+      community.general.npm:
+        path: /root/package
+    - name: Run server
+      command: pm2 start /root/package/server.js --force
+    - name: Enshure app is running
+      shell: ps aux | grep node
+      register: app_status
+    - debug: msg={{app_status}}
+
