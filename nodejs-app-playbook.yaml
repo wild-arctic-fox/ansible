@@ -9,8 +9,16 @@
     - name: Update apt repo & update_cache
       apt: update_cache=yes force_apt_get=yes
     # The NodeSource nodejs package contains both the node binary and npm
+    - name: Check if file already downloaded
+      ansible.builtin.stat:
+        path: /tmp/nodesource_setup.sh
+      register: stat_result
+    - name: Print file existence status
+      debug:
+        msg: "File exists {{stat_result.stat.exists}}"
     - name: Download Node.js setup script
       command: curl -sL https://deb.nodesource.com/setup_{{nodejs_version}}.x -o /tmp/nodesource_setup.sh
+      when: not stat_result.stat.exists
     - name: Execute Bash script
       script: /tmp/nodesource_setup.sh
     - name: Install the nodejs
