@@ -26,6 +26,9 @@
         url: https://github.com/docker/compose/releases/download/1.22.0/docker-compose-Linux-{{lookup('pipe', 'uname -m')}}
         dest: /usr/local/bin/docker-compose
         mode: +x
+    - name: Create a volume for portainer
+      community.docker.docker_volume:
+        name: portainer_data
 
 - name: Run docker container
   hosts: ec2
@@ -46,6 +49,10 @@
       community.docker.docker_image:
         name: redis
         source: pull
+    - name: Pull Portainer
+      community.docker.docker_image:
+        name: portainer/portainer
+        source: pull
       register: docker_redis_info
     - ansible.builtin.debug: msg={{docker_redis_info}}
     - name: Copy docker-compose file to ec2
@@ -57,7 +64,20 @@
         username: wildarcticfox
         password: "{{docker_password}}"
         reauthorize: yes
-    - name: Login to Docker(hub)
+    - name: Run server from Docker compose
       community.docker.docker_compose:
         project_src: /home/ec2-user
         state: present
+    - name: Restart a container portaoner
+      community.docker.docker_container:
+        name: portainer
+        image: portainer/portainer
+        state: started
+        restart: true
+        ports:
+          - "8000:8000"
+          - "9443:9443"
+        volumes:
+          - portainer_data:/data
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
