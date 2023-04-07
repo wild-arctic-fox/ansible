@@ -1,0 +1,18 @@
+# Ansible files to ignore
+
+# Ignore the local inventory file
+inventory
+
+# Ignore Ansible fact cache
+.ansible/
+
+# Ignore Ansible logs
+*.log
+
+# Ignore compiled Python files
+*.pyc
+
+# Ignore .DS_Store files created by macOS
+.DS_Store
+
+# Ignore any other files specific to your Ansible project
