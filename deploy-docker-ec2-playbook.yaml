@@ -1,0 +1,63 @@
+---
+- name: Install Docker & co
+  hosts: ec2
+  become: yes
+  gather_facts: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.7
+  tasks:
+    - name: Enshure that requests, docker-compose & docker module are installed via pip3 to use community.docker
+      pip:
+        name:
+          - requests
+          - docker
+          - docker-compose
+        executable: pip3
+    - name: Enshure Docker is installed
+      ansible.builtin.yum:
+        name: docker
+        state: latest
+        update_cache: yes
+      register: docker_info
+    - ansible.builtin.debug: msg={{docker_info}}
+    - name: Enshure Docker Compose is installed
+      ansible.builtin.get_url:
+        # jinja template
+        url: https://github.com/docker/compose/releases/download/1.22.0/docker-compose-Linux-{{lookup('pipe', 'uname -m')}}
+        dest: /usr/local/bin/docker-compose
+        mode: +x
+
+- name: Run docker container
+  hosts: ec2
+  become: true
+  gather_facts: yes
+  vars_prompt:
+    - name: docker_password
+      prompt: Enter docker password
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.7
+  tasks:
+    - name: Enshure Docker is running
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+    - name: Pull redis
+      community.docker.docker_image:
+        name: redis
+        source: pull
+      register: docker_redis_info
+    - ansible.builtin.debug: msg={{docker_redis_info}}
+    - name: Copy docker-compose file to ec2
+      ansible.builtin.copy:
+        src: ~/Test-App/docker-compose.yaml
+        dest: /home/ec2-user/docker-compose.yaml
+    - name: Login to Docker(hub)
+      community.docker.docker_login:
+        username: wildarcticfox
+        password: "{{docker_password}}"
+        reauthorize: yes
+    - name: Login to Docker(hub)
+      community.docker.docker_compose:
+        project_src: /home/ec2-user
+        state: present
